@@ -30,7 +30,7 @@ services:
         fromService:
           type: web
           name: minapplications-backend
-          property: url
+          property: host
 
 databases:
   - name: minapplications-db

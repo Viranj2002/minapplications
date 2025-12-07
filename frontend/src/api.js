@@ -1,4 +1,6 @@
-const API_URL = "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL
+    ? `https://${import.meta.env.VITE_API_URL}`
+    : "http://localhost:8000";
 
 export const fetchApplications = async () => {
     const response = await fetch(`${API_URL}/applications`);
