@@ -78,6 +78,37 @@ const Dashboard = ({ setActiveTab }) => {
         return 0; // Maintain original order for apps in the same category (both pinned or both unpinned)
     });
 
+    const getAppIcon = (iconIdentifier) => {
+        const iconStyle = { width: '48px', height: '48px', objectFit: 'contain' };
+
+        // Map identifiers to local paths
+        const iconMap = {
+            'image-to-pdf': '/icons/image-to-pdf.png',
+            'image-compressor': '/icons/image-compressor.png',
+            'word-to-pdf': '/icons/word-to-pdf.png',
+            'pdf-to-word': '/icons/pdf-to-word.png'
+        };
+
+        const localPath = iconMap[iconIdentifier];
+
+        if (localPath) {
+            return <img src={localPath} alt={iconIdentifier} className="app-icon" style={iconStyle} />;
+        }
+
+        // Fallback for full URLs
+        if (iconIdentifier && (iconIdentifier.startsWith('http') || iconIdentifier.startsWith('data:'))) {
+            return <img src={iconIdentifier} alt="App Icon" className="app-icon" style={iconStyle} onError={(e) => { e.target.src = 'https://via.placeholder.com/50' }} />;
+        }
+
+        // Default SVG fallback
+        return (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={iconStyle}>
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <path d="M12 8v8M8 12h8" />
+            </svg>
+        );
+    };
+
 
     return (
         <div className="dashboard">
@@ -100,7 +131,7 @@ const Dashboard = ({ setActiveTab }) => {
                 {sortedApps.map((app) => (
                     <div key={app.id} className="app-card">
                         <div className="app-header">
-                            <img src={app.icon} alt={app.name} className="app-icon" onError={(e) => { e.target.src = 'https://via.placeholder.com/50' }} />
+                            {getAppIcon(app.icon)}
                             <div className="app-menu-container">
                                 <div className="app-menu" onClick={(e) => toggleMenu(app.id, e)}>⋮</div>
                                 {openMenuId === app.id && (
