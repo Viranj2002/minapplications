@@ -720,3 +720,171 @@ body {
   background: #475569;
   color: var(--text-color);
 }
+
+/* Settings Help */
+.settings-help-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 2rem;
+}
+
+.settings-help-header {
+  padding: 0 0 1rem;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  margin-left: -0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: #f1f5f9;
+  color: var(--text-color);
+}
+
+.help-content-scroll {
+  flex: 1;
+  /* Remove overflow-y auto to let the main content scroll */
+}
+
+.help-hero {
+  margin: 1rem 0 3rem;
+  text-align: center;
+}
+
+.help-hero h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--text-color);
+}
+
+.help-hero p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin: 0 auto;
+}
+
+
+.help-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  background: white;
+  padding: 2rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.dark-theme .help-section {
+  background: var(--card-bg);
+  border: 1px solid #334155;
+}
+
+.help-category-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.help-item {
+  display: flex;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.help-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.help-item-icon {
+  width: 56px;
+  height: 56px;
+  background: #eff6ff;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.help-item-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.dark-theme .help-item-icon {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.help-item-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.help-item-content p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.help-item-content p:last-child {
+  margin-bottom: 0;
+}
+
+.help-item-content strong {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+/* Icon Colors */
+.text-red-500 {
+  color: #ef4444;
+}
+
+.text-blue-500 {
+  color: #3b82f6;
+}
+
+.text-blue-700 {
+  color: #1d4ed8;
+}
+
+/* Dark Theme Adjustments */
+.dark-theme .back-btn:hover {
+  background: #334155;
+}
+
+.dark-theme .help-category-title {
+  border-bottom-color: #334155;
+}
+
+.dark-theme .help-item {
+  border-bottom-color: #334155;
+}
+
+.dark-theme .help-item-content strong {
+  color: #e2e8f0;
+}

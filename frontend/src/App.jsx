@@ -7,6 +7,7 @@ import ImageCompressor from './components/ImageCompressor';
 import WordToPdf from './components/WordToPdf';
 import PdfToWord from './components/PdfToWord';
 import SettingsPanel from './components/SettingsPanel';
+import SettingsHelp from './components/SettingsHelp';
 import './index.css';
 
 function App() {
@@ -37,13 +38,15 @@ function App() {
               activeTab === 'image-compressor' ? <ImageCompressor setActiveTab={setActiveTab} /> :
                 activeTab === 'word-to-pdf' ? <WordToPdf setActiveTab={setActiveTab} /> :
                   activeTab === 'pdf-to-word' ? <PdfToWord setActiveTab={setActiveTab} /> :
-                    <Dashboard setActiveTab={setActiveTab} />}
+                    activeTab === 'tools-help' ? <SettingsHelp onBack={() => setActiveTab('dashboard')} /> :
+                      <Dashboard setActiveTab={setActiveTab} />}
       </main>
       <SettingsPanel
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         theme={theme}
         setTheme={setTheme}
+        setActiveTab={setActiveTab}
       />
     </div>
   );
