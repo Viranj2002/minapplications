@@ -33,13 +33,12 @@ function App() {
       />
       <main className="main-content">
         {activeTab === 'dashboard' ? <Dashboard setActiveTab={setActiveTab} /> :
-          activeTab === 'suggestion-board' ? <SuggestionBoard /> :
-            activeTab === 'pdf-converter' ? <PdfConverter setActiveTab={setActiveTab} /> :
-              activeTab === 'image-compressor' ? <ImageCompressor setActiveTab={setActiveTab} /> :
-                activeTab === 'word-to-pdf' ? <WordToPdf setActiveTab={setActiveTab} /> :
-                  activeTab === 'pdf-to-word' ? <PdfToWord setActiveTab={setActiveTab} /> :
-                    activeTab === 'tools-help' ? <SettingsHelp onBack={() => setActiveTab('dashboard')} /> :
-                      <Dashboard setActiveTab={setActiveTab} />}
+          activeTab === 'pdf-converter' ? <PdfConverter setActiveTab={setActiveTab} /> :
+            activeTab === 'image-compressor' ? <ImageCompressor setActiveTab={setActiveTab} /> :
+              activeTab === 'word-to-pdf' ? <WordToPdf setActiveTab={setActiveTab} /> :
+                activeTab === 'pdf-to-word' ? <PdfToWord setActiveTab={setActiveTab} /> :
+                  activeTab === 'tools-help' ? <SettingsHelp onBack={() => setActiveTab('dashboard')} /> :
+                    <Dashboard setActiveTab={setActiveTab} />}
       </main>
       <SettingsPanel
         isOpen={isSettingsOpen}

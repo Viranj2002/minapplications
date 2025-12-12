@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchApplications } from '../api';
+import SuggestionBoard from './SuggestionBoard';
 
 const Dashboard = ({ setActiveTab }) => {
     const [apps, setApps] = useState([]);
@@ -111,53 +112,58 @@ const Dashboard = ({ setActiveTab }) => {
 
 
     return (
-        <div className="dashboard">
-            <div className="header">
-                <h1>Applications</h1>
-                <div className="search-bar">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input
-                        type="text"
-                        placeholder="Search"
-                        value={searchQuery}
-                        onChange={handleSearch}
-                    />
+        <div className="dashboard-container-split">
+            <div className="dashboard-left">
+                <div className="header">
+                    <h1>Applications</h1>
+                    <div className="search-bar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input
+                            type="text"
+                            placeholder="Search"
+                            value={searchQuery}
+                            onChange={handleSearch}
+                        />
+                    </div>
+                    <div className="profile-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </div>
                 </div>
-                <div className="profile-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <div className="app-grid">
+                    {sortedApps.map((app) => (
+                        <div key={app.id} className="app-card">
+                            <div className="app-header">
+                                {getAppIcon(app.icon)}
+                                <div className="app-menu-container">
+                                    <div className="app-menu" onClick={(e) => toggleMenu(app.id, e)}>⋮</div>
+                                    {openMenuId === app.id && (
+                                        <div className="app-dropdown">
+                                            <div className="dropdown-item" onClick={() => togglePin(app.id)}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                                                </svg>
+                                                <span>{pinnedApps.includes(app.id) ? 'Unpin from Favorites' : 'Pin to Favorites'}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            {pinnedApps.includes(app.id) && (
+                                <div className="pin-indicator">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                                    </svg>
+                                </div>
+                            )}
+                            <h3>{app.name}</h3>
+                            <p>{app.category}</p>
+                            <button className="launch-btn" onClick={() => handleLaunch(app.name)}>Launch</button>
+                        </div>
+                    ))}
                 </div>
             </div>
-            <div className="app-grid">
-                {sortedApps.map((app) => (
-                    <div key={app.id} className="app-card">
-                        <div className="app-header">
-                            {getAppIcon(app.icon)}
-                            <div className="app-menu-container">
-                                <div className="app-menu" onClick={(e) => toggleMenu(app.id, e)}>⋮</div>
-                                {openMenuId === app.id && (
-                                    <div className="app-dropdown">
-                                        <div className="dropdown-item" onClick={() => togglePin(app.id)}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-                                            </svg>
-                                            <span>{pinnedApps.includes(app.id) ? 'Unpin from Favorites' : 'Pin to Favorites'}</span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        {pinnedApps.includes(app.id) && (
-                            <div className="pin-indicator">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-                                </svg>
-                            </div>
-                        )}
-                        <h3>{app.name}</h3>
-                        <p>{app.category}</p>
-                        <button className="launch-btn" onClick={() => handleLaunch(app.name)}>Launch</button>
-                    </div>
-                ))}
+            <div className="dashboard-right">
+                <SuggestionBoard />
             </div>
         </div>
     );
