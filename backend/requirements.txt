@@ -6,3 +6,4 @@ pydantic
 python-multipart
 pdf2docx
 numpy
+opencv-python-headless

@@ -101,3 +101,72 @@ def vote_suggestion(suggestion_id: int, vote_type: str, user_id: str, db: Sessio
     
     db.commit()
     return {"message": "Vote recorded", "upvotes": suggestion.upvotes, "downvotes": suggestion.downvotes}
+
+from fastapi import File, UploadFile
+from fastapi.responses import FileResponse
+from pdf2docx import Converter
+import shutil
+import os
+import uuid
+
+@app.post("/convert/pdf-to-word")
+def convert_pdf_to_word(file: UploadFile = File(...)):
+    # Create unique temp directory
+    temp_dir = f"temp_{uuid.uuid4()}"
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    try:
+        pdf_path = os.path.join(temp_dir, file.filename)
+        docx_filename = os.path.splitext(file.filename)[0] + ".docx"
+        docx_path = os.path.join(temp_dir, docx_filename)
+        
+        # Save uploaded PDF
+        with open(pdf_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        # Convert PDF to DOCX
+        cv = Converter(pdf_path)
+        cv.convert(docx_path, start=0, end=None)
+        cv.close()
+        
+        # Return file (background task to cleanup would be ideal, but for now we rely on OS or manual cleanup if needed. 
+        # Better: read to memory or use BackgroundTasks for cleanup)
+        return FileResponse(docx_path, filename=docx_filename, media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        
+    except Exception as e:
+        shutil.rmtree(temp_dir) # Cleanup on error
+        raise HTTPException(status_code=500, detail=str(e))
+
+    # Note: FastAPIs FileResponse doesn't auto-delete file after sending by default without BackgroundTask. 
+    # For a simple local app, we'll let it be or use a background task to cleanup *after* response.
+    # To fix cleanup:
+    
+from fastapi import BackgroundTasks
+
+@app.post("/convert/pdf-to-word-clean")
+def convert_pdf_to_word_clean(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    # Create unique temp directory
+    temp_dir = f"temp_{uuid.uuid4()}"
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    unique_filename = f"{uuid.uuid4()}_{file.filename}"
+    pdf_path = os.path.join(temp_dir, unique_filename)
+    docx_filename = os.path.splitext(file.filename)[0] + ".docx"
+    docx_path = os.path.join(temp_dir, docx_filename)
+    
+    try:
+        with open(pdf_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        cv = Converter(pdf_path)
+        cv.convert(docx_path)
+        cv.close()
+        
+        # Add cleanup task
+        background_tasks.add_task(shutil.rmtree, temp_dir)
+        
+        return FileResponse(docx_path, filename=docx_filename, media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    except Exception as e:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+        raise HTTPException(status_code=500, detail=str(e))

@@ -24,134 +24,33 @@ const PdfToWord = ({ setActiveTab }) => {
         if (!selectedFile) return;
 
         setIsConverting(true);
-        setStatusMessage('Reading PDF...');
-        const reader = new FileReader();
+        setStatusMessage('Uploading and converting...');
 
-        reader.onload = async (event) => {
-            try {
-                const typedarray = new Uint8Array(event.target.result);
-                const pdf = await pdfjsLib.getDocument(typedarray).promise;
+        const formData = new FormData();
+        formData.append('file', selectedFile);
 
-                const docChildren = [];
+        try {
+            // Use the clean endpoint to ensure temp files are removed
+            const response = await fetch('http://127.0.0.1:8000/convert/pdf-to-word-clean', {
+                method: 'POST',
+                body: formData,
+            });
 
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    setStatusMessage(`Processing page ${i} of ${pdf.numPages}...`);
-                    const page = await pdf.getPage(i);
-                    const viewport = page.getViewport({ scale: 1.0 });
-                    const textContent = await page.getTextContent();
-
-                    // Group text items by line (Y position)
-                    const lines = {};
-                    const yTolerance = 5; // Tolerance for considering items on the same line
-
-                    textContent.items.forEach(item => {
-                        const y = item.transform[5];
-                        const x = item.transform[4];
-                        const fontSize = Math.sqrt((item.transform[0] * item.transform[0]) + (item.transform[1] * item.transform[1])); // Approximate font size
-
-                        // Find existing line within tolerance
-                        let added = false;
-                        for (const lineY in lines) {
-                            if (Math.abs(y - parseFloat(lineY)) < yTolerance) {
-                                lines[lineY].push({ ...item, x, fontSize });
-                                added = true;
-                                break;
-                            }
-                        }
-
-                        if (!added) {
-                            lines[y] = [{ ...item, x, fontSize }];
-                        }
-                    });
-
-                    // Sort lines by Y (descending = top to bottom)
-                    const sortedY = Object.keys(lines).sort((a, b) => parseFloat(b) - parseFloat(a));
-
-                    sortedY.forEach(y => {
-                        const items = lines[y];
-                        // Sort items in line by X (ascending = left to right)
-                        items.sort((a, b) => a.x - b.x);
-
-                        // Construct text content for the line
-                        const lineText = items.map(item => item.str).join('');
-                        if (!lineText.trim()) return;
-
-                        // Basic heuristic for centering
-                        // Calculate total width of text items (approximate)
-                        // Note: This is a rough estimation. PDF doesn't give precise width without rendering.
-                        // We check if the line starts roughly in the middle-ish or if items are distributed.
-
-                        // Better Heuristic: Check start X and end X relative to viewport width.
-                        const startX = items[0].x;
-                        const lastItem = items[items.length - 1];
-                        const endX = lastItem.x + (lastItem.width || 0); // width might not be available directly in simplified item
-
-                        // Determine Alignment
-                        let alignment = AlignmentType.LEFT;
-                        const pageWidth = viewport.width;
-                        const lineCenter = (startX + endX) / 2;
-                        const pageCenter = pageWidth / 2;
-
-                        // If the center of the text line is close to the center of the page (within 10% margin), consider it centered
-                        if (Math.abs(lineCenter - pageCenter) < (pageWidth * 0.1)) {
-                            alignment = AlignmentType.CENTER;
-                        }
-
-                        // Determine Font Size (average of items)
-                        const avgFontSize = items.reduce((sum, item) => sum + item.fontSize, 0) / items.length;
-                        // Map PDF font size (approx points) to Docx sizes (half-points, e.g., 24 = 12pt)
-                        // Simple scaler: PDF pt * 2 roughly? Or just pass through if PDF is 1:1. 
-                        // Usually PDF coords are 72 DPI. Word uses 1/72 inch points too?
-                        // Docx TextRun size is in half-points. So 12pt = 24.
-                        const docxSize = Math.max(16, Math.round(avgFontSize * 1.5)); // Heuristic adjustment
-
-                        const paragraph = new Paragraph({
-                            alignment: alignment,
-                            children: [
-                                new TextRun({
-                                    text: lineText,
-                                    size: docxSize,
-                                    font: "Calibri" // Fallback font
-                                })
-                            ],
-                            spacing: {
-                                after: 120, // Space after paragraph (twips)
-                            }
-                        });
-
-                        docChildren.push(paragraph);
-                    });
-
-                    // Add page break if not last page
-                    if (i < pdf.numPages) {
-                        docChildren.push(new Paragraph({
-                            children: [new TextRun({ text: "", break: 1 })] // Page break logic could be improved with Sections, but simple break is okay
-                        }));
-                    }
-                }
-
-                setStatusMessage('Generating Word document...');
-
-                const doc = new Document({
-                    sections: [{
-                        properties: {},
-                        children: docChildren,
-                    }],
-                });
-
-                const blob = await Packer.toBlob(doc);
-                saveAs(blob, selectedFile.name.replace('.pdf', '.docx'));
-
-                setStatusMessage(`Converted ${selectedFile.name} successfully!`);
-                setIsConverting(false);
-
-            } catch (error) {
-                console.error("Error converting PDF to Word:", error);
-                setStatusMessage('Error: ' + error.message);
-                setIsConverting(false);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Conversion failed');
             }
-        };
-        reader.readAsArrayBuffer(selectedFile);
+
+            const blob = await response.blob();
+            saveAs(blob, selectedFile.name.replace('.pdf', '.docx'));
+
+            setStatusMessage(`Converted ${selectedFile.name} successfully!`);
+        } catch (error) {
+            console.error("Error converting PDF to Word:", error);
+            setStatusMessage('Error: ' + error.message);
+        } finally {
+            setIsConverting(false);
+        }
     };
 
     return (
@@ -198,7 +97,8 @@ const PdfToWord = ({ setActiveTab }) => {
                         border: 'none',
                         borderRadius: '6px',
                         cursor: selectedFile ? 'pointer' : 'not-allowed',
-                        fontSize: '15px'
+                        fontSize: '15px',
+                        width: '100%'
                     }}
                 >
                     {isConverting ? 'Converting...' : 'Convert to Word'}
@@ -220,5 +120,4 @@ const PdfToWord = ({ setActiveTab }) => {
         </div>
     );
 };
-
 export default PdfToWord;
