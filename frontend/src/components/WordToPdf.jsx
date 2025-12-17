@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
-import mammoth from 'mammoth';
-import { jsPDF } from 'jspdf';
+import { saveAs } from 'file-saver';
 
 const WordToPdf = ({ setActiveTab }) => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [isConverting, setIsConverting] = useState(false);
-    const [previewHtml, setPreviewHtml] = useState('');
+    const [statusMessage, setStatusMessage] = useState('');
 
     const handleFileChange = (event) => {
         const file = event.target.files[0];
         if (file) {
             setSelectedFile(file);
-            setPreviewHtml('');
+            setStatusMessage('');
         }
     };
 
@@ -19,117 +18,32 @@ const WordToPdf = ({ setActiveTab }) => {
         if (!selectedFile) return;
 
         setIsConverting(true);
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const arrayBuffer = event.target.result;
+        setStatusMessage('Uploading and converting...');
 
-                // Convert DOCX to HTML with images
-                const result = await mammoth.convertToHtml(
-                    { arrayBuffer: arrayBuffer },
-                    {
-                        convertImage: mammoth.images.imgElement(function (image) {
-                            return image.read("base64").then(function (imageBuffer) {
-                                return {
-                                    src: "data:" + image.contentType + ";base64," + imageBuffer
-                                };
-                            });
-                        })
-                    }
-                );
+        const formData = new FormData();
+        formData.append('file', selectedFile);
 
-                const html = result.value;
-                setPreviewHtml(html);
+        try {
+            const response = await fetch('http://127.0.0.1:8000/convert/word-to-pdf', {
+                method: 'POST',
+                body: formData,
+            });
 
-                // Create PDF
-                const doc = new jsPDF();
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight();
-                const margin = 15;
-
-                // Create temporary div to parse HTML
-                const tempDiv = document.createElement("div");
-                tempDiv.innerHTML = html;
-                tempDiv.style.width = (pageWidth - 2 * margin) + 'mm';
-                tempDiv.style.fontFamily = 'Arial, sans-serif';
-                tempDiv.style.fontSize = '12px';
-                tempDiv.style.lineHeight = '1.5';
-                document.body.appendChild(tempDiv);
-
-                // Simple text extraction and wrapping
-                let yPosition = margin;
-                const lineHeight = 7;
-                const maxWidth = pageWidth - 2 * margin;
-
-                // Process each element
-                const elements = tempDiv.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, img');
-
-                for (let elem of elements) {
-                    if (elem.tagName === 'IMG') {
-                        // Handle images
-                        try {
-                            const imgData = elem.src;
-                            const img = new Image();
-                            img.src = imgData;
-                            await new Promise(resolve => {
-                                img.onload = resolve;
-                                img.onerror = resolve;
-                            });
-
-                            const imgWidth = Math.min(maxWidth, 100);
-                            const imgHeight = (img.height / img.width) * imgWidth;
-
-                            if (yPosition + imgHeight > pageHeight - margin) {
-                                doc.addPage();
-                                yPosition = margin;
-                            }
-
-                            doc.addImage(imgData, 'JPEG', margin, yPosition, imgWidth, imgHeight);
-                            yPosition += imgHeight + 5;
-                        } catch (e) {
-                            console.error('Error adding image:', e);
-                        }
-                    } else {
-                        // Handle text
-                        const text = elem.innerText || elem.textContent;
-                        if (!text.trim()) continue;
-
-                        let fontSize = 12;
-                        let fontStyle = 'normal';
-
-                        if (elem.tagName.match(/H[1-6]/)) {
-                            fontSize = 18 - parseInt(elem.tagName[1]) * 2;
-                            fontStyle = 'bold';
-                        }
-
-                        doc.setFontSize(fontSize);
-                        doc.setFont('helvetica', fontStyle);
-
-                        const lines = doc.splitTextToSize(text, maxWidth);
-
-                        for (let line of lines) {
-                            if (yPosition > pageHeight - margin) {
-                                doc.addPage();
-                                yPosition = margin;
-                            }
-                            doc.text(line, margin, yPosition);
-                            yPosition += lineHeight;
-                        }
-
-                        yPosition += 3; // Add spacing after paragraph
-                    }
-                }
-
-                document.body.removeChild(tempDiv);
-                doc.save('converted.pdf');
-                setIsConverting(false);
-            } catch (error) {
-                console.error("Error converting Word to PDF:", error);
-                alert("Error converting file: " + error.message);
-                setIsConverting(false);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Conversion failed');
             }
-        };
-        reader.readAsArrayBuffer(selectedFile);
+
+            const blob = await response.blob();
+            saveAs(blob, selectedFile.name.replace('.docx', '.pdf'));
+
+            setStatusMessage(`Converted ${selectedFile.name} successfully!`);
+        } catch (error) {
+            console.error("Error converting Word to PDF:", error);
+            setStatusMessage('Error: ' + error.message);
+        } finally {
+            setIsConverting(false);
+        }
     };
 
     return (
@@ -176,16 +90,23 @@ const WordToPdf = ({ setActiveTab }) => {
                         border: 'none',
                         borderRadius: '6px',
                         cursor: selectedFile ? 'pointer' : 'not-allowed',
-                        fontSize: '15px'
+                        fontSize: '15px',
+                        width: '100%'
                     }}
                 >
                     {isConverting ? 'Converting...' : 'Convert to PDF'}
                 </button>
 
-                {previewHtml && (
-                    <div style={{ marginTop: '20px', padding: '15px', background: 'white', borderRadius: '8px', maxHeight: '300px', overflow: 'auto' }}>
-                        <h4>Preview:</h4>
-                        <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                {statusMessage && (
+                    <div style={{
+                        marginTop: '20px',
+                        padding: '15px',
+                        background: statusMessage.startsWith('Error') ? '#fee2e2' : '#dcfce7',
+                        color: statusMessage.startsWith('Error') ? '#991b1b' : '#166534',
+                        borderRadius: '8px',
+                        fontSize: '14px'
+                    }}>
+                        {statusMessage}
                     </div>
                 )}
             </div>
@@ -194,3 +115,4 @@ const WordToPdf = ({ setActiveTab }) => {
 };
 
 export default WordToPdf;
+

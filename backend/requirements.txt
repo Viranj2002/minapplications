@@ -7,3 +7,5 @@ python-multipart
 pdf2docx
 numpy
 opencv-python-headless
+docx2pdf
+

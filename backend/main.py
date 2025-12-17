@@ -170,3 +170,40 @@ def convert_pdf_to_word_clean(background_tasks: BackgroundTasks, file: UploadFil
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
         raise HTTPException(status_code=500, detail=str(e))
+
+from docx2pdf import convert
+
+from fastapi import BackgroundTasks
+
+@app.post("/convert/word-to-pdf")
+def convert_word_to_pdf(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    # Create unique temp directory
+    temp_dir = f"temp_{uuid.uuid4()}"
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    try:
+        docx_filename = file.filename
+        pdf_filename = os.path.splitext(docx_filename)[0] + ".pdf"
+        
+        docx_path = os.path.join(temp_dir, docx_filename)
+        pdf_path = os.path.join(temp_dir, pdf_filename)
+        
+        # Save uploaded DOCX
+        with open(docx_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        # Convert DOCX to PDF
+        # pythoncom.CoInitialize() is needed for multi-threading/FastAPI
+        import pythoncom
+        pythoncom.CoInitialize() 
+        convert(docx_path, pdf_path)
+        
+        # Add cleanup task
+        background_tasks.add_task(shutil.rmtree, temp_dir)
+        
+        return FileResponse(pdf_path, filename=pdf_filename, media_type='application/pdf')
+        
+    except Exception as e:
+        shutil.rmtree(temp_dir) # Cleanup on error
+        raise HTTPException(status_code=500, detail=str(e))
+
