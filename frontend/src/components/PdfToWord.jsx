@@ -4,6 +4,9 @@ import { Document, Packer, Paragraph, TextRun, AlignmentType } from "docx";
 import { saveAs } from 'file-saver';
 
 // Set worker source
+import { API_URL } from '../api';
+
+// Set worker source
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
@@ -31,7 +34,7 @@ const PdfToWord = ({ setActiveTab }) => {
 
         try {
             // Use the clean endpoint to ensure temp files are removed
-            const response = await fetch('http://127.0.0.1:8000/convert/pdf-to-word-clean', {
+            const response = await fetch(`${API_URL}/convert/pdf-to-word-clean`, {
                 method: 'POST',
                 body: formData,
             });

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { saveAs } from 'file-saver';
+import { API_URL } from '../api';
 
 const WordToPdf = ({ setActiveTab }) => {
     const [selectedFile, setSelectedFile] = useState(null);
@@ -24,7 +25,7 @@ const WordToPdf = ({ setActiveTab }) => {
         formData.append('file', selectedFile);
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/convert/word-to-pdf', {
+            const response = await fetch(`${API_URL}/convert/word-to-pdf`, {
                 method: 'POST',
                 body: formData,
             });
